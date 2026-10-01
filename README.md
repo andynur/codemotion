@@ -5,6 +5,7 @@
 ![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.4-000?logo=bun)
 ![React](https://img.shields.io/badge/React-19-149eca?logo=react)
 ![Status](https://img.shields.io/badge/status-MVP-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 ![Bubble sort running in Code Motion Visualizer](artifacts/smoke.png)
 
@@ -171,7 +172,7 @@ See [docs/PRD.md](docs/PRD.md) for the full product requirements and work plan.
 
 ## License
 
-No license has been chosen yet. Until a `LICENSE` file is added, all rights are reserved by the author.
+[MIT](LICENSE) © 2026 Andy Nur
 
 ## Acknowledgements
 
