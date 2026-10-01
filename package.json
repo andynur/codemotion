@@ -1,0 +1,36 @@
+{
+  "name": "code-motion-visualizer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun server.ts",
+    "tokens": "bun scripts/gen-tokens.ts",
+    "prebuild": "bun run tokens",
+    "build": "bun build ./src/index.html --outdir dist --naming='[name].[ext]' --minify --production --react-compiler --metafile-md=dist/metafile.md && bun build ./src/tracer/tracer.worker.ts --outfile dist/tracer.worker.js --minify --production",
+    "build:single": "bun scripts/build-single.ts",
+    "test": "bun test",
+    "smoke": "bun scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@codemirror/commands": "latest",
+    "@codemirror/lang-javascript": "latest",
+    "@codemirror/language": "latest",
+    "@codemirror/state": "latest",
+    "@codemirror/view": "latest",
+    "@fontsource-variable/inter": "latest",
+    "@fontsource-variable/jetbrains-mono": "latest",
+    "acorn": "latest",
+    "acorn-walk": "latest",
+    "astring": "latest",
+    "motion": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-resizable-panels": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}
