@@ -1,0 +1,81 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`tracer core preset trace summaries stay stable 1`] = `
+[
+  {
+    "final": {
+      "number": undefined,
+      "numbers": [
+        3,
+        5,
+        2,
+        8,
+      ],
+      "total": 18,
+    },
+    "id": "sum",
+    "steps": 14,
+  },
+  {
+    "final": {
+      "i": undefined,
+      "max": 12,
+      "numbers": [
+        4,
+        9,
+        2,
+        12,
+        7,
+      ],
+    },
+    "id": "max",
+    "steps": 23,
+  },
+  {
+    "final": {
+      "left": 2,
+      "right": 2,
+      "temp": undefined,
+      "values": [
+        5,
+        4,
+        3,
+        2,
+        1,
+      ],
+    },
+    "id": "reverse",
+    "steps": 22,
+  },
+  {
+    "final": {
+      "end": undefined,
+      "i": undefined,
+      "temp": undefined,
+      "values": [
+        1,
+        2,
+        4,
+        5,
+        8,
+      ],
+    },
+    "id": "bubble",
+    "steps": 64,
+  },
+  {
+    "final": {
+      "i": undefined,
+    },
+    "id": "fizzbuzz",
+    "steps": 141,
+  },
+  {
+    "final": {
+      "result": 120,
+    },
+    "id": "factorial",
+    "steps": 21,
+  },
+]
+`;
