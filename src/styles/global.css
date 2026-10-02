@@ -2,7 +2,7 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
-body { color: var(--color-text); background: var(--color-background-neutral-subtle); font-family: "Inter Variable", system-ui, sans-serif; font-size: var(--font-body-font-size); line-height: var(--font-body-line-height); }
+body { color: var(--color-text); background: var(--surface-sunken); font-family: "Inter Variable", system-ui, sans-serif; font-size: var(--font-body-font-size); line-height: var(--font-body-line-height); }
 button, select, input { font: inherit; }
 button, select { color: inherit; }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: var(--border-width-focused) solid var(--color-border-focused); outline-offset: var(--space-025); }
@@ -13,12 +13,28 @@ code, pre, kbd, .cm-editor { font-family: "JetBrains Mono Variable", monospace; 
 .code-editor { min-height: 0; flex: 1; overflow: hidden; }
 .cm-editor { height: 100%; color: var(--color-text-code-default); background: var(--surface-sunken); font-size: var(--font-code-font-size); }
 .cm-editor.cm-focused { outline: none; }
+.cm-content { line-height: var(--font-body-large-line-height); caret-color: var(--color-icon-accent-orange); }
+.cm-cursor { border-left-color: var(--color-icon-accent-orange); }
 .cm-scroller { padding-block: var(--space-100); }
 .cm-gutters { color: var(--color-text-code-gutter); background: var(--surface-sunken); border-right: var(--border-width-default) solid var(--color-border); }
-.cm-active-trace-line { background: var(--color-background-selected); box-shadow: inset var(--border-width-selected) 0 var(--color-border-selected); }
+.cm-active-trace-line { color: var(--color-text); }
 .cm-error-line { background: var(--color-background-danger); box-shadow: inset var(--border-width-selected) 0 var(--color-border-danger); }
-.cm-selectionBackground { background: var(--color-background-selected-pressed) !important; }
+.cm-selectionBackground, .cm-focused .cm-selectionBackground { background: var(--color-background-selected-pressed) !important; }
+
+/* Active trace line: a bar that springs from line to line. */
+.cm-trace-layer { z-index: -1; }
+.cm-trace-bar { background: var(--color-background-accent-orange-subtlest); box-shadow: inset var(--border-width-selected) 0 var(--color-border-accent-orange); transition: top var(--motion-duration-xxlong) var(--motion-easing-spring), height var(--motion-duration-long) var(--motion-easing-out-practical); }
+.cm-ghost { display: inline-block; margin-left: var(--space-200); color: var(--color-text-accent-yellow); font-style: italic; opacity: 0.85; animation: ghost-in var(--motion-duration-long) var(--motion-easing-out-practical) both; }
+@keyframes ghost-in { from { opacity: 0; transform: translateX(var(--space-negative-100)); } }
+
+.tok-keyword { color: var(--color-text-code-keywords); }
+.tok-number { color: var(--color-text-code-numbers); }
+.tok-string { color: var(--color-text-code-strings); }
+.tok-comment { color: var(--color-text-code-comments); font-style: italic; }
+.tok-definition { color: var(--color-text-code-accent-2); }
+.tok-property { color: var(--color-text-code-functions); }
+.tok-operator { color: var(--color-text-code-operators); }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: var(--motion-duration-instant) !important; animation-duration: var(--motion-duration-instant) !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: var(--motion-duration-instant) !important; animation-duration: var(--motion-duration-instant) !important; animation-delay: var(--motion-duration-instant) !important; }
 }
