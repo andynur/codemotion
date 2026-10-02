@@ -10,6 +10,9 @@ await using view = new Bun.WebView({
 });
 
 await view.navigate(url);
+// Pin English so the copy checks below stay stable; Indonesian is the default.
+await view.evaluate(`localStorage.setItem("codemotion-lang", "en")`);
+await view.navigate(url);
 const initial = await view.evaluate(`new Promise((resolve) => {
   const started = Date.now();
   const check = () => {
@@ -46,16 +49,16 @@ await Bun.sleep(100);
 const current = await view.evaluate(`Number(document.querySelector('[data-testid="current-step"]')?.textContent)`);
 if (current !== middle.midpoint + 1) throw new Error(`Timeline did not move to the middle: ${current}`);
 
-await view.click('[aria-label="Step forward"]');
+await view.click('[data-testid="step-forward"]');
 const steppedForward = await view.evaluate(`Number(document.querySelector('[data-testid="current-step"]')?.textContent)`);
-await view.click('[aria-label="Step back"]');
+await view.click('[data-testid="step-back"]');
 const steppedBack = await view.evaluate(`Number(document.querySelector('[data-testid="current-step"]')?.textContent)`);
 if (steppedForward !== current + 1 || steppedBack !== current) throw new Error("Step controls did not move exactly one step");
-await view.click('[aria-label="Play"]');
-await Bun.sleep(600);
+await view.click('[data-testid="play-toggle"]');
+await Bun.sleep(1_500);
 const played = await view.evaluate(`Number(document.querySelector('[data-testid="current-step"]')?.textContent)`);
 if (played <= current) throw new Error("Play did not advance the timeline");
-await view.click('[aria-label="Pause"]');
+await view.click('[data-testid="play-toggle"]');
 
 await view.evaluate(`(() => {
   const picker = document.querySelector('[data-testid="preset-picker"]');
@@ -81,8 +84,8 @@ await view.evaluate(`(() => {
 })()`);
 await Bun.sleep(100);
 const callStack = await view.evaluate(`({
-  frames: document.querySelectorAll('section[aria-label="Call stack"] li').length,
-  active: document.querySelector('section[aria-label="Call stack"] li')?.textContent ?? ''
+  frames: document.querySelectorAll('[data-testid="call-stack"] li').length,
+  active: document.querySelector('[data-testid="call-stack"] li')?.textContent ?? ''
 })`);
 if (callStack.frames !== 5 || !callStack.active.includes("factorial")) throw new Error(`Call stack did not render recursion: ${JSON.stringify(callStack)}`);
 
