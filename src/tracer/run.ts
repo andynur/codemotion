@@ -1,9 +1,9 @@
-import type { TraceResult } from "./types";
+import type { RunOutput } from "./types";
 import { embeddedWorkerSource } from "./worker-source";
 
 let requestId = 0;
 
-export function runCode(source: string, options: { stepLimit?: number; timeoutMs?: number } = {}): Promise<TraceResult> {
+export function runCode(source: string, options: { stepLimit?: number; timeoutMs?: number } = {}): Promise<RunOutput> {
   const id = ++requestId;
   const workerUrl = embeddedWorkerSource
     ? URL.createObjectURL(new Blob([embeddedWorkerSource], { type: "text/javascript" }))
@@ -13,20 +13,20 @@ export function runCode(source: string, options: { stepLimit?: number; timeoutMs
     const timer = window.setTimeout(() => {
       worker.terminate();
       if (embeddedWorkerSource) URL.revokeObjectURL(workerUrl);
-      resolve({ error: true, code: "TIMEOUT", message: `Execution exceeded the ${options.timeoutMs ?? 2_000}ms time limit` });
+      resolve({ result: { error: true, code: "TIMEOUT", message: `Execution exceeded the ${options.timeoutMs ?? 2_000}ms time limit` } });
     }, options.timeoutMs ?? 2_000);
-    worker.onmessage = (event: MessageEvent<{ id: number; result: TraceResult }>) => {
+    worker.onmessage = (event: MessageEvent<RunOutput & { id: number }>) => {
       if (event.data.id !== id) return;
       clearTimeout(timer);
       worker.terminate();
       if (embeddedWorkerSource) URL.revokeObjectURL(workerUrl);
-      resolve(event.data.result);
+      resolve({ result: event.data.result, flow: event.data.flow });
     };
     worker.onerror = (event) => {
       clearTimeout(timer);
       worker.terminate();
       if (embeddedWorkerSource) URL.revokeObjectURL(workerUrl);
-      resolve({ error: true, code: "RUNTIME_ERROR", message: event.message || "The trace worker failed" });
+      resolve({ result: { error: true, code: "RUNTIME_ERROR", message: event.message || "The trace worker failed" } });
     };
     worker.postMessage({ id, source, stepLimit: options.stepLimit ?? 5_000 });
   });

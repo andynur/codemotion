@@ -50,4 +50,41 @@ export interface TraceError {
 
 export type TraceResult = Trace | TraceError;
 
-export const isTraceError = (result: TraceResult): result is TraceError => !Array.isArray(result);
+export type FlowNodeKind = "terminal" | "process" | "io" | "decision";
+export type FlowEdgeKind = "flow" | "true" | "false" | "loop";
+
+export interface FlowNode {
+  id: string;
+  kind: FlowNodeKind;
+  label: string;
+  /** Center x and top y in flowchart units. */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  line: number;
+}
+
+export interface FlowEdge {
+  id: string;
+  from: string;
+  to: string;
+  kind: FlowEdgeKind;
+  d: string;
+  label?: string;
+  labelAt?: [number, number];
+  labelAnchor?: "start" | "middle" | "end";
+}
+
+export interface FlowGraph {
+  width: number;
+  height: number;
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  /** Maps trace positions such as `stmt:3:2` or `cond:4:9` to node ids. */
+  lookup: Record<string, string>;
+}
+
+export interface RunOutput { result: TraceResult; flow?: FlowGraph }
+
+export const isTraceError =(result: TraceResult): result is TraceError => !Array.isArray(result);
