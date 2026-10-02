@@ -1,0 +1,40 @@
+.flowScroller { flex: 1; min-height: 0; overflow: auto; padding: var(--space-200); scroll-behavior: smooth; }
+.flowChart { display: block; width: min(100%, var(--flow-width)); height: auto; margin-inline: auto; overflow: visible; font-family: "JetBrains Mono Variable", monospace; }
+
+.edge-flow { --edge-color: var(--color-icon-accent-orange); }
+.edge-true { --edge-color: var(--color-icon-success); }
+.edge-false { --edge-color: var(--color-icon-danger); }
+.edge-loop { --edge-color: var(--color-icon-accent-yellow); }
+
+.flowArrow path { fill: var(--edge-color); }
+.flowEdge { fill: none; stroke: var(--edge-color); stroke-width: var(--border-width-selected); stroke-linecap: round; stroke-linejoin: round; opacity: 0.28; transition: opacity var(--motion-duration-long) var(--motion-easing-out-practical); }
+.flowEdge.visited { opacity: 0.7; }
+.flowTrail { fill: none; stroke: var(--edge-color); stroke-width: calc(var(--border-width-selected) * 2); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 var(--space-050) var(--edge-color)); animation: flow-draw var(--motion-duration-xlong) var(--motion-easing-out-bold) forwards; }
+.flowDot { fill: var(--edge-color); opacity: 0; filter: drop-shadow(0 0 var(--space-075) var(--edge-color)); pointer-events: none; }
+
+.flowEdgeLabel { fill: var(--edge-color); font-size: var(--font-body-small-font-size); font-weight: var(--font-weight-semibold-font-weight); dominant-baseline: middle; opacity: 0.6; transition: opacity var(--motion-duration-medium) var(--motion-easing-out-practical); }
+.flowEdgeLabel.current { opacity: 1; }
+
+.flowNode { transform-box: fill-box; transform-origin: center; opacity: 0.7; transition: opacity var(--motion-duration-long) var(--motion-easing-out-practical); }
+.flowNode.visited { opacity: 0.85; }
+.flowShape { fill: var(--surface-raised); stroke: var(--color-border-bold); stroke-width: var(--border-width-default); transition: fill var(--motion-duration-long) var(--motion-easing-out-practical), stroke var(--motion-duration-long) var(--motion-easing-out-practical); }
+.node-terminal .flowShape { fill: var(--color-background-neutral); }
+.node-io .flowShape { stroke: var(--color-border-accent-blue); }
+.flowText { fill: var(--color-text-subtle); font-size: var(--font-code-font-size); text-anchor: middle; dominant-baseline: central; }
+.node-decision .flowText { fill: var(--color-text-code-accent-2); }
+
+.flowNode.active { opacity: 1; filter: drop-shadow(0 0 var(--space-150) var(--color-border-accent-orange)); animation: node-pop var(--motion-duration-xxlong) var(--motion-easing-spring) both; }
+.flowNode.active.arriving { animation-delay: var(--motion-duration-xlong); }
+.flowNode.active .flowShape { fill: var(--color-background-accent-orange-subtlest); stroke: var(--color-border-accent-orange); stroke-width: var(--border-width-selected); }
+.flowNode.active .flowText { fill: var(--color-text); font-weight: var(--font-weight-semibold-font-weight); }
+.flowNode.active.node-decision .flowShape { stroke-dasharray: var(--space-075) var(--space-050); }
+.playing .flowNode.active.node-decision .flowShape { animation: flow-ants var(--motion-duration-xxlong) linear infinite; }
+
+@keyframes flow-draw { to { stroke-dashoffset: 0; } }
+@keyframes node-pop { from { transform: scale(0.88); } to { transform: scale(1); } }
+@keyframes flow-ants { to { stroke-dashoffset: calc(var(--space-075) + var(--space-050)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .flowTrail { animation: none; stroke-dashoffset: 0; }
+  .flowNode.active { animation: none; }
+}

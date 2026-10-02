@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>While Loop in Action</title>
+<style>
+  /* Dark is the default theme; light is opt-in via data-theme="light". */
+  :root{
+    --bg:#050505;
+    --bg-glow:#111113;
+    --surface:#0b0b0d;
+    --surface-2:#111114;
+    --border:#232327;
+    --border-strong:#34343a;
+    --text:#f2f2f3;
+    --muted:#8b8b92;
+    --subtle:#5c5c63;
+    --title:#f5b03c;
+    --accent:#ff5a36;
+    --accent-soft:rgba(255,90,54,.16);
+    --data:#6aa8ff;
+    --data-soft:rgba(106,168,255,.14);
+    --marker:#facc15;
+    --marker-soft:rgba(250,204,21,.09);
+    --true:#34d399;
+    --false:#f87171;
+    --loop:#facc15;
+    --edge:#3a3a40;
+    --node-fill:#0d0d10;
+    --kw:#ff5fa2;
+    --num:#a78bfa;
+    --fn:#5eead4;
+    --str:#a3e635;
+    --shadow:0 18px 60px rgba(0,0,0,.45);
+    --spring:cubic-bezier(.34,1.56,.64,1);
+    --ease-out:cubic-bezier(.2,.8,.2,1);
+    --mono:"JetBrains Mono","SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+    --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --lh:30px;
+    color-scheme:dark;
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f6f4;
+    --bg-glow:#ffffff;
+    --surface:#ffffff;
+    --surface-2:#f7f7f5;
+    --border:#e4e4e1;
+    --border-strong:#cfcfcb;
+    --text:#18181b;
+    --muted:#66666d;
+    --subtle:#a1a1a8;
+    --title:#d97706;
+    --accent:#e0401f;
+    --accent-soft:rgba(224,64,31,.12);
+    --data:#2563eb;
+    --data-soft:rgba(37,99,235,.10);
+    --marker:#ca8a04;
+    --marker-soft:rgba(202,138,4,.10);
+    --true:#059669;
+    --false:#dc2626;
+    --loop:#ca8a04;
+    --edge:#c9c9c4;
+    --node-fill:#ffffff;
+    --kw:#c026d3;
+    --num:#7c3aed;
+    --fn:#0f766e;
+    --str:#4d7c0f;
+    --shadow:0 18px 50px rgba(20,20,20,.08);
+    color-scheme:light;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:radial-gradient(circle at top, var(--bg-glow) 0%, var(--bg) 52%);
+    background-color:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    overflow-x:hidden;
+    transition:background-color .3s ease, color .3s ease;
+  }
+  button,select,input{font:inherit;color:inherit}
+
+  .wrap{width:min(1180px, calc(100vw - 32px));margin:auto;padding:40px 0 64px}
+
+  h1{
+    margin:0 0 28px;
+    text-align:center;
+    font-size:clamp(36px,6vw,74px);
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:800;
+  }
+  h1 .accent{color:var(--title)}
+
+  /* ---------- toolbar ---------- */
+  .toolbar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:10px 12px;margin-bottom:20px;
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    box-shadow:var(--shadow);
+  }
+  .transport{display:flex;align-items:center;gap:6px}
+  .icon-btn{
+    width:36px;height:36px;display:grid;place-items:center;
+    background:transparent;border:1px solid transparent;border-radius:10px;
+    color:var(--muted);cursor:pointer;
+    transition:color .2s, background .2s, transform .2s var(--spring);
+  }
+  .icon-btn:hover{color:var(--text);background:var(--surface-2)}
+  .icon-btn:active{transform:scale(.9)}
+  .icon-btn:disabled{opacity:.35;cursor:not-allowed}
+  .icon-btn svg{width:18px;height:18px}
+  .play-btn{
+    width:42px;height:42px;border-radius:50%;
+    background:var(--text);color:var(--bg);border:none;cursor:pointer;
+    display:grid;place-items:center;
+    transition:transform .25s var(--spring);
+  }
+  .play-btn:hover{transform:scale(1.06)}
+  .play-btn:active{transform:scale(.92)}
+  .play-btn svg{width:18px;height:18px}
+
+  .scrub{display:flex;align-items:center;gap:10px;flex:1;min-width:180px}
+  .scrub input{flex:1;accent-color:var(--text)}
+  .counter{font-family:var(--mono);font-size:13px;color:var(--muted);min-width:56px;text-align:right}
+  .counter b{color:var(--text);font-weight:600}
+
+  .field{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+  .field select{
+    background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:5px 8px;
+  }
+  .stepper{display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .stepper button{width:28px;height:28px;background:var(--surface-2);border:none;cursor:pointer;color:var(--muted)}
+  .stepper button:hover{color:var(--text)}
+  .stepper output{min-width:28px;text-align:center;font-family:var(--mono);color:var(--num)}
+  .sep{width:1px;height:24px;background:var(--border)}
+
+  /* ---------- layout ---------- */
+  .layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:20px;align-items:start}
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);
+  }
+  .col{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+  /* ---------- code panel ---------- */
+  .code-card{padding:18px 0 18px}
+  .code-head{display:flex;align-items:center;gap:8px;padding:0 20px 14px;color:var(--muted);font-size:13px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--border-strong)}
+  .filename{margin-left:auto;font-weight:600;font-family:var(--mono);font-size:12px}
+
+  .code{position:relative;font-family:var(--mono);font-size:15px;overflow:hidden}
+  .code-line{position:relative;display:flex;height:var(--lh);line-height:var(--lh);white-space:pre;z-index:1}
+  .ln{width:46px;flex:none;text-align:right;padding-right:16px;color:var(--subtle);transition:color .25s}
+  .code-line.active .ln{color:var(--marker)}
+  .src{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .kw{color:var(--kw)} .num{color:var(--num)} .fn{color:var(--fn)} .pun{color:var(--muted)}
+
+  .line-bar{
+    position:absolute;left:0;right:0;top:0;height:var(--lh);
+    background:var(--marker-soft);
+    border-left:2px solid var(--marker);
+    opacity:0;
+    transition:transform .55s var(--spring), opacity .25s ease;
+    z-index:0;
+  }
+  .line-bar::before{
+    content:"";position:absolute;left:8px;top:50%;width:6px;height:6px;margin-top:-3px;
+    border-radius:50%;background:var(--marker);
+  }
+  .line-bar.on{opacity:1}
+
+  .ghost{
+    margin-left:18px;color:var(--subtle);font-style:italic;
+    display:inline-block;
+    animation:ghost-in .45s var(--ease-out) both;
+  }
+  .ghost b{color:var(--data);font-weight:500;font-style:normal}
+  @keyframes ghost-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+
+  /* ---------- variables ---------- */
+  .vars{padding:14px 18px}
+  .panel-title{
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+    display:flex;align-items:center;gap:6px;font-family:var(--mono);
+  }
+  .var-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .var{
+    padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);
+    font-family:var(--mono);
+  }
+  .var span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .var strong{display:inline-block;font-size:20px;font-weight:600;color:var(--data)}
+  .var strong.t{color:var(--true)} .var strong.f{color:var(--false)} .var strong.none{color:var(--subtle)}
+  .bump{animation:bump .6s var(--spring)}
+  @keyframes bump{0%{transform:scale(.6);opacity:.2}100%{transform:scale(1);opacity:1}}
+  .var.flash{animation:flash .8s ease}
+  @keyframes flash{0%{border-color:var(--data);box-shadow:0 0 0 3px var(--data-soft)}100%{}}
+
+  /* ---------- console ---------- */
+  .console{padding:14px 18px;min-height:120px;font-family:var(--mono);font-size:14px}
+  .console-line{color:var(--text);padding:2px 0}
+  .console-line .pr{color:var(--subtle);margin-right:8px}
+  .console-line.new{animation:line-in .45s var(--spring) both}
+  @keyframes line-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+  .cursor{display:inline-block;width:8px;height:15px;background:var(--subtle);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---------- stage ---------- */
+  .stage{padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px;position:relative}
+  .stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .stage-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
+  .pill{
+    font-family:var(--mono);font-size:13px;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);
+    white-space:nowrap;
+  }
+  .pill.pop{animation:pill-pop .55s var(--spring)}
+  @keyframes pill-pop{0%{transform:scale(.85);opacity:.3}100%{transform:scale(1);opacity:1}}
+
+  #flow{width:100%;height:auto;display:block;max-height:600px}
+
+  .edge-base{fill:none;stroke:var(--edge);stroke-width:2;transition:stroke .3s}
+  .edge-trail{
+    fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;
+    stroke-dasharray:1;stroke-dashoffset:1;opacity:0;
+    transition:opacity .35s ease;
+  }
+  .edge-trail[data-kind="true"]{stroke:var(--true)}
+  .edge-trail[data-kind="false"]{stroke:var(--false)}
+  .edge-trail[data-kind="loop"]{stroke:var(--loop)}
+  .edge-trail.visited{stroke-dashoffset:0;opacity:.28}
+  .edge-trail.current{stroke-dashoffset:0;opacity:1;filter:url(#glow)}
+  .arrow-head{fill:var(--edge)}
+
+  .node{opacity:.38;transition:opacity .35s ease;transform-box:fill-box;transform-origin:center}
+  .node.done{opacity:.7}
+  .node.active{opacity:1}
+  .node .shape{fill:var(--node-fill);stroke:var(--border-strong);stroke-width:2.5;transition:stroke .3s ease, fill .3s ease}
+  .node.dashed .shape{stroke-dasharray:7 6}
+  .node.active .shape{stroke:var(--accent);fill:var(--accent-soft);filter:url(#glow)}
+  .node.active.dashed .shape{animation:march 1s linear infinite}
+  @keyframes march{to{stroke-dashoffset:-26}}
+  .node text{fill:var(--muted);font-family:var(--sans);font-weight:700;font-size:17px;text-anchor:middle;dominant-baseline:central;transition:fill .3s}
+  .node text.mono{font-family:var(--mono);font-weight:500;font-size:15px}
+  .node.active text{fill:var(--text)}
+  .node .sub{opacity:.45;transition:opacity .3s, fill .3s}
+  .node .sub.on{opacity:1;fill:var(--text)}
+  .node .eval{font-family:var(--mono);font-size:12px;font-weight:500;fill:var(--data)}
+
+  .branch{font-family:var(--sans);font-weight:800;font-size:15px;opacity:.3;transition:opacity .3s;transform-box:fill-box;transform-origin:center}
+  .branch.true{fill:var(--true)} .branch.false{fill:var(--false)}
+  .branch.on{opacity:1}
+
+  .var-chip{font-family:var(--mono);font-size:15px;fill:var(--data);transform-box:fill-box;transform-origin:left center}
+  .var-chip.hidden{opacity:0}
+
+  #dot{fill:var(--accent);filter:url(#glow);opacity:0}
+
+  .caption{
+    display:flex;gap:8px;align-items:baseline;
+    padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);
+    font-size:14px;line-height:1.5;min-height:48px;
+  }
+  .caption .step-no{color:var(--marker);font-weight:600;white-space:nowrap;font-family:var(--mono);font-size:13px}
+  .caption .text.swap{animation:ghost-in .4s var(--ease-out) both}
+  .caption code{font-family:var(--mono);font-size:13px;color:var(--data)}
+
+  .hint{color:var(--muted);text-align:center;margin-top:24px;font-size:13px;line-height:1.8}
+  kbd{
+    font-family:var(--mono);font-size:11px;padding:2px 6px;border-radius:6px;
+    border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);
+  }
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    .stage{order:-1}
+  }
+  @media (max-width:560px){
+    .var-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+    .code{font-size:13px}
+    .ln{width:34px;padding-right:10px}
+    .toolbar .sep{display:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <h1><span class="accent">While</span> Loop in Action</h1>
+
+    <div class="toolbar" role="toolbar" aria-label="Playback">
+      <div class="transport">
+        <button class="icon-btn" id="firstBtn" aria-label="Ke awal (Home)" title="Ke awal (Home)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14"/><path d="M18 6l-8 6 8 6z"/></svg>
+        </button>
+        <button class="icon-btn" id="prevBtn" aria-label="Langkah sebelumnya (←)" title="Sebelumnya (←)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <button class="play-btn" id="playBtn" aria-label="Play (Space)" title="Play / Pause (Space)"></button>
+        <button class="icon-btn" id="nextBtn" aria-label="Langkah berikutnya (→)" title="Berikutnya (→)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="scrub">
+        <input id="scrubber" type="range" min="0" max="0" value="0" aria-label="Posisi langkah" />
+        <span class="counter" id="counter"></span>
+      </div>
+
+      <span class="sep"></span>
+
+      <label class="field">Speed
+        <select id="speed">
+          <option value="0.5">0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+        </select>
+      </label>
+
+      <div class="field">n
+        <div class="stepper">
+          <button id="nMinus" aria-label="Kurangi n">−</button>
+          <output id="nOut">3</output>
+          <button id="nPlus" aria-label="Tambah n">+</button>
+        </div>
+      </div>
+
+      <button class="icon-btn" id="themeBtn" aria-label="Ganti tema (T)" title="Ganti tema (T)"></button>
+    </div>
+
+    <div class="layout">
+      <section class="col">
+        <div class="card code-card">
+          <div class="code-head">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="filename">while.js</span>
+          </div>
+          <div class="code" id="code">
+            <div class="line-bar" id="lineBar"></div>
+          </div>
+        </div>
+
+        <div class="card vars">
+          <div class="panel-title">{x} Variables</div>
+          <div class="var-grid">
+            <div class="var" id="varI"><span>i</span><strong>—</strong></div>
+            <div class="var" id="varCond"><span id="condLabel">i &lt; 3</span><strong>—</strong></div>
+            <div class="var" id="varIter"><span>iteration</span><strong>0</strong></div>
+          </div>
+        </div>
+
+        <div class="card console">
+          <div class="panel-title">&gt;_ Console</div>
+          <div id="consoleOutput"></div>
+        </div>
+      </section>
+
+      <section class="card stage">
+        <div class="stage-head">
+          <span class="stage-label">Flowchart · while</span>
+          <span class="pill" id="pill">start</span>
+        </div>
+
+        <svg id="flow" viewBox="0 0 420 560" role="img" aria-label="Flowchart while loop">
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path class="arrow-head" d="M0 0L10 5L0 10z" />
+            </marker>
+          </defs>
+          <g id="edges"></g>
+          <g id="nodes"></g>
+          <text class="branch true" id="trueLabel" x="222" y="336">True</text>
+          <text class="branch false" id="falseLabel" x="292" y="238">False</text>
+          <text class="var-chip hidden" id="varChip" x="304" y="131">i = 0</text>
+          <circle id="dot" r="6" cx="0" cy="0" />
+        </svg>
+
+        <div class="caption" aria-live="polite">
+          <span class="step-no" id="stepNo"></span>
+          <span class="text" id="captionText"></span>
+        </div>
+      </section>
+    </div>
+
+    <div class="hint">
+      <kbd>Space</kbd> play/pause · <kbd>←</kbd> <kbd>→</kbd> langkah · <kbd>Home</kbd> <kbd>End</kbd> awal/akhir · <kbd>T</kbd> tema
+    </div>
+  </main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SVG_NS = "http://www.w3.org/2000/svg";
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const BASE_STEP_MS = 1500;
+
+const ICONS = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+};
+
+/* ---------- spring easing ----------
+   Sample a damped spring into a CSS linear() easing so CSS transitions and
+   WAAPI share one bouncy curve. Falls back to an overshoot cubic-bezier. */
+function springEasing({ damping = 0.42, omega = 15, duration = 0.6, samples = 48 } = {}) {
+  const wd = omega * Math.sqrt(1 - damping * damping);
+  const points = [];
+  for (let k = 0; k <= samples; k++) {
+    const t = (k / samples) * duration;
+    const x = 1 - Math.exp(-damping * omega * t) * (Math.cos(wd * t) + (damping * omega / wd) * Math.sin(wd * t));
+    points.push(k === samples ? 1 : +x.toFixed(4));
+  }
+  return `linear(${points.join(", ")})`;
+}
+const SPRING = CSS.supports("transition-timing-function", "linear(0, 1)") ? springEasing() : "cubic-bezier(.34,1.56,.64,1)";
+document.documentElement.style.setProperty("--spring", SPRING);
+
+/* ---------- flowchart geometry ---------- */
+const EDGES = {
+  "e-start-init": { d: "M210 64 V104", kind: "flow" },
+  "e-init-cond": { d: "M210 152 V184", kind: "flow" },
+  "e-true": { d: "M210 316 V353", kind: "true" },
+  "e-loop": { d: "M110 393 H62 Q50 393 50 381 V262 Q50 250 62 250 H144", kind: "loop" },
+  "e-false": { d: "M276 250 H338 Q350 250 350 262 V484", kind: "false" },
+};
+
+function el(tag, attrs = {}, parent) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+const edgeEls = {};
+for (const [id, edge] of Object.entries(EDGES)) {
+  el("path", { class: "edge-base", d: edge.d, "marker-end": "url(#arrow)" }, $("edges"));
+  edgeEls[id] = el("path", { class: "edge-trail", d: edge.d, pathLength: "1", "data-kind": edge.kind }, $("edges"));
+}
+
+const nodeEls = {};
+function makeNode(id, build, dashed = false) {
+  const group = el("g", { class: `node${dashed ? " dashed" : ""}`, "data-id": id }, $("nodes"));
+  build(group);
+  nodeEls[id] = group;
+  return group;
+}
+makeNode("start", (g) => {
+  el("rect", { class: "shape", x: 150, y: 16, width: 120, height: 48, rx: 14 }, g);
+  el("text", { x: 210, y: 40 }, g).textContent = "Start";
+});
+makeNode("init", (g) => {
+  el("rect", { class: "shape", x: 130, y: 104, width: 160, height: 48, rx: 14 }, g);
+  el("text", { class: "mono", x: 210, y: 128 }, g).textContent = "let i = 0";
+});
+makeNode("cond", (g) => {
+  el("polygon", { class: "shape", points: "210,184 276,250 210,316 144,250" }, g);
+  el("text", { class: "mono", id: "condText", x: 210, y: 242 }, g).textContent = "i < 3";
+  el("text", { class: "eval", id: "condEval", x: 210, y: 266 }, g).textContent = "";
+}, true);
+makeNode("body", (g) => {
+  el("rect", { class: "shape", x: 110, y: 353, width: 200, height: 80, rx: 16 }, g);
+  el("text", { class: "mono sub", id: "bodyLog", x: 210, y: 380 }, g).textContent = "console.log(i)";
+  el("text", { class: "mono sub", id: "bodyInc", x: 210, y: 406 }, g).textContent = "i++";
+});
+makeNode("end", (g) => {
+  el("rect", { class: "shape", x: 290, y: 484, width: 120, height: 48, rx: 14 }, g);
+  el("text", { x: 350, y: 508 }, g).textContent = "End while";
+}, true);
+
+/* ---------- trace ----------
+   Precompute every step as an immutable snapshot, so rendering is a pure
+   function of the step index and back/forward/scrub all work the same way. */
+function buildTrace(n) {
+  const steps = [];
+  let i = 0;
+  let iteration = 0;
+  const out = [];
+  const snap = (step) => steps.push({ i: null, cond: null, iteration, out: [...out], sub: null, branch: null, ...step });
+
+  snap({ node: "start", line: null, edge: null, pill: "start", caption: "Program dimulai. Belum ada variabel." });
+  snap({ node: "init", line: 1, edge: "e-start-init", i, note: "i = <b>0</b>", pill: "let i = 0", caption: "Deklarasi <code>i</code> dengan nilai awal <code>0</code>." });
+
+  let incoming = "e-init-cond";
+  for (;;) {
+    const ok = i < n;
+    snap({
+      node: "cond", line: 3, edge: incoming, i, cond: ok, branch: ok ? "true" : "false",
+      note: `${i} &lt; ${n} → <b>${ok}</b>`,
+      pill: `i < ${n} → ${ok}`,
+      caption: ok
+        ? `Cek kondisi: <code>${i} &lt; ${n}</code> bernilai <code>true</code>, masuk ke body loop.`
+        : `Cek kondisi: <code>${i} &lt; ${n}</code> bernilai <code>false</code>, keluar dari loop.`,
+    });
+    if (!ok) break;
+
+    out.push(i);
+    snap({
+      node: "body", line: 4, edge: "e-true", i, cond: ok, sub: "log",
+      note: `output → <b>${i}</b>`,
+      pill: `console.log(${i})`,
+      caption: `<code>console.log(i)</code> mencetak <code>${i}</code> ke console.`,
+    });
+
+    i++;
+    iteration++;
+    snap({
+      node: "body", line: 5, edge: null, i, cond: ok, sub: "inc",
+      note: `i: ${i - 1} → <b>${i}</b>`,
+      pill: `i++ → ${i}`,
+      caption: `<code>i++</code> menaikkan <code>i</code> dari <code>${i - 1}</code> ke <code>${i}</code>. Iterasi ke-${iteration} selesai, kembali cek kondisi.`,
+    });
+    incoming = "e-loop";
+  }
+
+  snap({
+    node: "end", line: 6, edge: "e-false", i, cond: false,
+    note: `loop selesai, ${iteration}× iterasi`,
+    pill: "end while",
+    caption: `Loop selesai setelah <code>${iteration}</code> iterasi. Program lanjut ke kode setelah <code>while</code>.`,
+  });
+  return steps;
+}
+
+/* ---------- code panel ---------- */
+function codeLines(n) {
+  return [
+    '<span class="kw">let</span> i <span class="pun">=</span> <span class="num">0</span><span class="pun">;</span>',
+    '',
+    `<span class="kw">while</span> <span class="pun">(</span>i <span class="pun">&lt;</span> <span class="num">${n}</span><span class="pun">) {</span>`,
+    '  <span class="fn">console</span><span class="pun">.</span><span class="fn">log</span><span class="pun">(</span>i<span class="pun">);</span>',
+    '  i<span class="pun">++;</span>',
+    '<span class="pun">}</span>',
+  ];
+}
+
+function renderCode(n) {
+  $("code").querySelectorAll(".code-line").forEach((line) => line.remove());
+  codeLines(n).forEach((html, index) => {
+    const line = document.createElement("div");
+    line.className = "code-line";
+    line.dataset.line = index + 1;
+    line.innerHTML = `<span class="ln">${index + 1}</span><span class="src">${html}</span>`;
+    $("code").appendChild(line);
+  });
+}
+
+/* ---------- state ---------- */
+const state = { n: 3, steps: [], index: 0, playing: false, speed: 1, timer: null, token: 0, prev: null };
+
+function stepMs() { return BASE_STEP_MS / state.speed; }
+
+function retrigger(node, cls) {
+  node.classList.remove(cls);
+  void node.offsetWidth;
+  node.classList.add(cls);
+}
+
+function pop(node, from = 0.9) {
+  if (reduceMotion || !node.animate) return;
+  node.animate([{ transform: `scale(${from})` }, { transform: "scale(1)" }], { duration: 650, easing: SPRING });
+}
+
+function travel(edgeId, duration, token) {
+  const path = edgeEls[edgeId];
+  const dot = $("dot");
+  path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration, easing: "cubic-bezier(.45,0,.2,1)" });
+
+  const length = path.getTotalLength();
+  const color = getComputedStyle(path).stroke;
+  dot.style.fill = color;
+  const start = performance.now();
+  const frame = (now) => {
+    if (token !== state.token) { dot.style.opacity = 0; return; }
+    const t = Math.min(1, (now - start) / duration);
+    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const point = path.getPointAtLength(eased * length);
+    dot.setAttribute("cx", point.x);
+    dot.setAttribute("cy", point.y);
+    dot.style.opacity = t < 1 ? 1 : 0;
+    if (t < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+/* Render the flowchart, code and panels for one step. Animations play only
+   when advancing by exactly one step; jumps and rewinds snap to the state. */
+function render(animate) {
+  const token = ++state.token;
+  const { steps, index } = state;
+  const step = steps[index];
+  const prev = state.prev;
+  const motion = animate && !reduceMotion;
+
+  // Edges: everything traversed before this step stays as a faint trail.
+  const traversed = new Set(steps.slice(0, index).map((s) => s.edge).filter(Boolean));
+  for (const [id, path] of Object.entries(edgeEls)) {
+    path.classList.toggle("current", id === step.edge);
+    path.classList.toggle("visited", traversed.has(id) && id !== step.edge);
+  }
+
+  const travelMs = Math.min(650, stepMs() * 0.45);
+  const activate = () => {
+    if (token !== state.token) return;
+    const visitedNodes = new Set(steps.slice(0, index).map((s) => s.node));
+    for (const [id, node] of Object.entries(nodeEls)) {
+      node.classList.toggle("active", id === step.node);
+      node.classList.toggle("done", id !== step.node && visitedNodes.has(id));
+    }
+    $("trueLabel").classList.toggle("on", step.branch === "true");
+    $("falseLabel").classList.toggle("on", step.branch === "false");
+    $("bodyLog").classList.toggle("on", step.sub === "log");
+    $("bodyInc").classList.toggle("on", step.sub === "inc");
+    $("condEval").textContent = step.node === "cond" ? `${step.i} < ${state.n} ${step.cond ? "✓" : "✗"}` : "";
+
+    if (motion) {
+      const nodeChanged = !prev || prev.node !== step.node;
+      pop(nodeEls[step.node], nodeChanged ? 0.88 : 0.96);
+      if (step.branch) pop($(step.branch === "true" ? "trueLabel" : "falseLabel"), 0.6);
+    }
+  };
+
+  if (motion && step.edge) {
+    travel(step.edge, travelMs, token);
+    setTimeout(activate, travelMs * 0.8);
+  } else {
+    activate();
+  }
+
+  // Live variable chip next to the flow.
+  const chip = $("varChip");
+  chip.classList.toggle("hidden", step.i === null);
+  if (step.i !== null) {
+    chip.textContent = `i = ${step.i}`;
+    if (motion && prev && prev.i !== step.i) pop(chip, 0.5);
+  }
+
+  renderCodeState(step, motion);
+  renderPanels(step, prev, motion);
+  renderTransport();
+  state.prev = step;
+}
+
+function renderCodeState(step, motion) {
+  const bar = $("lineBar");
+  $("code").querySelectorAll(".code-line").forEach((line) => {
+    line.classList.toggle("active", Number(line.dataset.line) === step.line);
+    line.querySelector(".ghost")?.remove();
+  });
+  bar.classList.toggle("on", step.line !== null);
+  if (step.line === null) return;
+
+  const lineHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lh"));
+  bar.style.transform = `translateY(${(step.line - 1) * lineHeight}px)`;
+  const ghost = document.createElement("span");
+  ghost.className = "ghost";
+  ghost.innerHTML = `// ${step.note}`;
+  if (!motion) ghost.style.animation = "none";
+  $("code").querySelector(`.code-line[data-line="${step.line}"] .src`).appendChild(ghost);
+}
+
+function setVar(box, text, cls, changed, motion) {
+  const strong = box.querySelector("strong");
+  strong.textContent = text;
+  strong.className = cls;
+  if (changed && motion) {
+    retrigger(strong, "bump");
+    retrigger(box, "flash");
+  }
+}
+
+function renderPanels(step, prev, motion) {
+  setVar($("varI"), step.i === null ? "—" : String(step.i), step.i === null ? "none" : "", prev && prev.i !== step.i, motion);
+  setVar($("varCond"), step.cond === null ? "—" : String(step.cond), step.cond === null ? "none" : step.cond ? "t" : "f", prev && prev.cond !== step.cond, motion);
+  setVar($("varIter"), String(step.iteration), "", prev && prev.iteration !== step.iteration, motion);
+
+  const grew = motion && prev && step.out.length > prev.out.length;
+  $("consoleOutput").innerHTML =
+    step.out.map((value, k) => `<div class="console-line${grew && k === step.out.length - 1 ? " new" : ""}"><span class="pr">&gt;</span>${value}</div>`).join("") +
+    '<span class="cursor"></span>';
+
+  const pill = $("pill");
+  pill.textContent = step.pill;
+  if (motion) retrigger(pill, "pop");
+
+  $("stepNo").textContent = `Step ${state.index + 1}:`;
+  const caption = $("captionText");
+  caption.innerHTML = step.caption;
+  if (motion) retrigger(caption, "swap");
+}
+
+function renderTransport() {
+  const last = state.steps.length - 1;
+  $("scrubber").max = last;
+  $("scrubber").value = state.index;
+  $("counter").innerHTML = `<b>${state.index + 1}</b> / ${last + 1}`;
+  $("prevBtn").disabled = state.index === 0;
+  $("firstBtn").disabled = state.index === 0;
+  $("nextBtn").disabled = state.index === last;
+  const atEnd = state.index === last;
+  $("playBtn").innerHTML = state.playing ? ICONS.pause : atEnd ? ICONS.replay : ICONS.play;
+  $("playBtn").setAttribute("aria-label", state.playing ? "Pause (Space)" : "Play (Space)");
+}
+
+/* ---------- playback ---------- */
+function goTo(index, animate = false) {
+  state.index = Math.max(0, Math.min(state.steps.length - 1, index));
+  render(animate);
+}
+
+function next() {
+  if (state.index >= state.steps.length - 1) return pause();
+  goTo(state.index + 1, true);
+}
+
+function schedule() {
+  clearTimeout(state.timer);
+  if (!state.playing) return;
+  state.timer = setTimeout(() => {
+    next();
+    if (state.index >= state.steps.length - 1) pause();
+    else schedule();
+  }, stepMs());
+}
+
+function play() {
+  if (state.index >= state.steps.length - 1) goTo(0);
+  state.playing = true;
+  renderTransport();
+  schedule();
+}
+
+function pause() {
+  state.playing = false;
+  clearTimeout(state.timer);
+  renderTransport();
+}
+
+function toggle() { state.playing ? pause() : play(); }
+
+function setN(n) {
+  state.n = Math.max(0, Math.min(6, n));
+  $("nOut").textContent = state.n;
+  $("condLabel").textContent = `i < ${state.n}`;
+  $("condText").textContent = `i < ${state.n}`;
+  state.steps = buildTrace(state.n);
+  state.prev = null;
+  pause();
+  renderCode(state.n);
+  goTo(0);
+}
+
+/* ---------- theme ---------- */
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  $("themeBtn").innerHTML = theme === "dark" ? ICONS.sun : ICONS.moon;
+  try { localStorage.setItem("while-motion-theme", theme); } catch {}
+}
+function storedTheme() {
+  try { return localStorage.getItem("while-motion-theme"); } catch { return null; }
+}
+
+/* ---------- wiring ---------- */
+$("playBtn").addEventListener("click", toggle);
+$("nextBtn").addEventListener("click", () => { pause(); next(); });
+$("prevBtn").addEventListener("click", () => { pause(); goTo(state.index - 1); });
+$("firstBtn").addEventListener("click", () => { pause(); goTo(0); });
+$("scrubber").addEventListener("input", (event) => { pause(); goTo(Number(event.target.value)); });
+$("speed").addEventListener("change", (event) => { state.speed = Number(event.target.value); schedule(); });
+$("nMinus").addEventListener("click", () => setN(state.n - 1));
+$("nPlus").addEventListener("click", () => setN(state.n + 1));
+$("themeBtn").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+window.addEventListener("keydown", (event) => {
+  const target = event.target instanceof Element ? event.target : null;
+  if (target?.closest("input, select") || event.metaKey || event.ctrlKey || event.altKey) return;
+  // A focused button already handles Space natively; avoid toggling twice.
+  if (event.code === "Space" && target?.closest("button")) return;
+  if (event.code === "Space") { event.preventDefault(); toggle(); }
+  else if (event.key === "ArrowRight") { event.preventDefault(); pause(); next(); }
+  else if (event.key === "ArrowLeft") { event.preventDefault(); pause(); goTo(state.index - 1); }
+  else if (event.key === "Home") { event.preventDefault(); pause(); goTo(0); }
+  else if (event.key === "End") { event.preventDefault(); pause(); goTo(state.steps.length - 1); }
+  else if (event.key.toLowerCase() === "t") applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+});
+
+applyTheme(storedTheme() ?? "dark");
+setN(3);
+</script>
+</body>
+</html>

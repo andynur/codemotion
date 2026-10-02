@@ -1,68 +1,55 @@
 import { AnimatePresence, motion } from "motion/react";
-import type { CallFrame, SnapshotValue, Step, Trace } from "../tracer/types";
+import type { CallFrame, FlowGraph, SnapshotValue, Trace } from "../tracer/types";
+import { useT } from "../app/i18n";
+import { FlowChart } from "./FlowChart";
+import type { FlowPath } from "./flowModel";
 import { stageTransition } from "./motion";
+import { changedNames, display, narrate, visibleScope } from "./narrate";
 import "./stage.css";
 
-const styles = { activeFrame: "activeFrame", arrayBlock: "arrayBlock", arrayCell: "arrayCell", arrayRow: "arrayRow", arrayTitle: "arrayTitle", badges: "badges", branch: "branch", callFrame: "callFrame", callStack: "callStack", callStackHeader: "callStackHeader", callStackList: "callStackList", console: "console", danger: "danger", empty: "empty", emptyMark: "emptyMark", eyebrow: "eyebrow", frameHeader: "frameHeader", frameLocals: "frameLocals", lineBadge: "lineBadge", lozenge: "lozenge", stage: "stage", stageHeader: "stageHeader", success: "success", varBox: "varBox", variableGrid: "variableGrid", varName: "varName" } as const;
-
-const display = (value: SnapshotValue) => {
-  if (value === undefined) return "undefined";
-  return typeof value === "string" ? `“${value}”` : JSON.stringify(value);
-};
-
-export function VarBox({ name, value }: { name: string; value: SnapshotValue }) {
+export function VarBox({ name, value, changed, stamp }: { name: string; value: SnapshotValue; changed: boolean; stamp: number }) {
   return (
-    <motion.article layout className={styles.varBox} transition={stageTransition()}>
-      <span className={styles.varName}>{name}</span>
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.code key={display(value)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={stageTransition()}>{display(value)}</motion.code>
-      </AnimatePresence>
+    <motion.article layout className={`varBox${changed ? " changed" : ""}`} transition={stageTransition()}>
+      <span className="varName">{name}</span>
+      <code key={changed ? `${display(value)}-${stamp}` : display(value)} className="varValue">{display(value)}</code>
     </motion.article>
   );
 }
 
-export function ArrayRow({ name, values }: { name: string; values: SnapshotValue[] }) {
+export function ArrayRow({ name, values, previous }: { name: string; values: SnapshotValue[]; previous?: SnapshotValue[] }) {
+  const { t } = useT();
   return (
-    <article className={styles.arrayBlock}>
-      <div className={styles.arrayTitle}><code>{name}</code><span>{values.length} items</span></div>
-      <div className={styles.arrayRow}>
+    <article className="arrayBlock">
+      <div className="arrayTitle"><code>{name}</code><span>{t.items(values.length)}</span></div>
+      <div className="arrayRow">
         <AnimatePresence mode="popLayout" initial={false}>
-          {values.map((value, index) => (
-            <motion.div layout layoutId={`${name}-${String(value)}-${index}`} className={styles.arrayCell} key={`${index}-${String(value)}`} transition={stageTransition()}>
-              <small>{index}</small><code>{display(value)}</code>
-            </motion.div>
-          ))}
+          {values.map((value, index) => {
+            const changed = previous !== undefined && JSON.stringify(previous[index]) !== JSON.stringify(value);
+            return (
+              <motion.div layout layoutId={`${name}-${String(value)}-${index}`} className={`arrayCell${changed ? " changed" : ""}`} key={`${index}-${String(value)}`} transition={stageTransition()}>
+                <small>{index}</small><code>{display(value)}</code>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     </article>
   );
 }
 
-function LoopBadge({ step }: { step: Step }) {
-  const loopVariable = Object.entries(step.scopes.global).find(([key, value]) => typeof value === "number" && ["i", "j", "left", "right", "end"].includes(key));
-  const condition = step.kind === "condition" ? Boolean(step.event.detail) : undefined;
-  return (
-    <div className={styles.badges}>
-      {(step.kind === "loop" || step.kind === "condition") && <span className={styles.lozenge}>Loop {loopVariable ? `${loopVariable[0]} = ${loopVariable[1]}` : "iteration"}</span>}
-      {condition !== undefined && <span className={condition ? styles.success : styles.danger}>Condition: {String(condition)}</span>}
-      {step.kind === "call" && <span className={styles.lozenge}>Call {String(step.event.detail)}()</span>}
-      {step.kind === "return" && <span className={styles.lozenge}>Return {display(step.event.returnValue)}</span>}
-    </div>
-  );
-}
-
 function CallStack({ frames }: { frames: CallFrame[] }) {
+  const { t } = useT();
   if (!frames.length) return null;
   const ordered = [...frames].reverse();
   return (
-    <section className={styles.callStack} aria-label="Call stack">
-      <header className={styles.callStackHeader}><h3>Call stack</h3><span>{frames.length} {frames.length === 1 ? "frame" : "frames"}</span></header>
-      <ol className={styles.callStackList}>
+    <section className="callStack" aria-label={t.callStack} data-testid="call-stack">
+      <header className="sectionHeader"><h3>{t.callStack}</h3><span>{t.frames(frames.length)}</span></header>
+      <ol className="callStackList">
         <AnimatePresence initial={false}>
           {ordered.map((frame, index) => (
-            <motion.li layout key={frame.id} className={`${styles.callFrame} ${index === 0 ? styles.activeFrame : ""}`} transition={stageTransition()}>
-              <div className={styles.frameHeader}><code>{frame.name}()</code>{index === 0 && <span>Running</span>}</div>
-              <div className={styles.frameLocals}>
+            <motion.li layout key={frame.id} className={`callFrame${index === 0 ? " activeFrame" : ""}`} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={stageTransition()}>
+              <div className="frameHeader"><code>{frame.name}()</code>{index === 0 && <span>{t.running}</span>}</div>
+              <div className="frameLocals">
                 {Object.entries(frame.locals).map(([name, value]) => <code key={name}>{name} = {display(value)}</code>)}
               </div>
             </motion.li>
@@ -73,29 +60,81 @@ function CallStack({ frames }: { frames: CallFrame[] }) {
   );
 }
 
-function BranchIndicator({ step }: { step: Step }) {
-  if (step.kind !== "branch") return null;
-  return <div className={styles.branch}>Taken branch: <strong>{step.event.detail}</strong></div>;
+const isArray = (value: SnapshotValue): value is SnapshotValue[] => Array.isArray(value);
+
+/** Variables and console output for one step. */
+export function StatePanel({ trace, index }: { trace: Trace; index: number }) {
+  const { t } = useT();
+  const step = trace[index];
+  const scope = visibleScope(step);
+  const changed = new Set(changedNames(trace, index));
+  const variables = Object.entries(scope).filter(([, value]) => !isArray(value));
+  const output = step ? trace.slice(0, index + 1).flatMap((item) => item.event.output !== undefined ? [{ id: item.id, text: item.event.output }] : []) : [];
+  return (
+    <div className="statePanel">
+      <section className="stateSection" aria-label={t.variables}>
+        <header className="sectionHeader"><h3>{t.variables}</h3><span>{variables.length}</span></header>
+        {variables.length
+          ? <div className="variableGrid">{variables.map(([name, value]) => <VarBox key={name} name={name} value={value} changed={changed.has(name)} stamp={index} />)}</div>
+          : <p className="muted">{step ? t.noVariables : t.runToSeeVariables}</p>}
+      </section>
+      <section className="stateSection console" aria-label={t.console}>
+        <header className="sectionHeader"><h3>{t.console}</h3><span>{output.length}</span></header>
+        <pre>{output.length ? output.map((line) => <span key={line.id} className={line.id === index || line.id === index - 1 ? "fresh" : undefined}>{line.text}{"\n"}</span>) : <span className="muted">{t.noOutput}</span>}</pre>
+      </section>
+    </div>
+  );
 }
 
-export function Stage({ step, trace }: { step?: Step; trace: Trace }) {
-  if (!step) return <section className={styles.empty}><div className={styles.emptyMark}>▶</div><h2>Ready to visualize</h2><p>Run the code, then move through the generated timeline.</p></section>;
-  const values = Object.entries(step.scopes.global);
-  const variables = values.filter(([, value]) => !Array.isArray(value));
-  const arrays = values.filter(([, value]) => Array.isArray(value)) as [string, SnapshotValue[]][];
-  const output = trace.slice(0, step.id + 1).flatMap((item) => item.event.output ? [item.event.output] : []);
+/** Arrays and the call stack for one step. */
+export function MemoryPanel({ trace, index }: { trace: Trace; index: number }) {
+  const { t } = useT();
+  const step = trace[index];
+  const scope = visibleScope(step);
+  const before = visibleScope(trace[index - 1]);
+  const arrays = Object.entries(scope).filter((entry): entry is [string, SnapshotValue[]] => isArray(entry[1]));
+  const frames = step?.scopes.stack ?? [];
+  if (!arrays.length && !frames.length) return <p className="memoryEmpty">{step ? t.memoryHint : t.memoryEmpty}</p>;
   return (
-    <section className={styles.stage} aria-live="polite">
-      <header className={styles.stageHeader}>
-        <div><span className={styles.eyebrow}>Step {step.id + 1} of {trace.length}</span><h2>{step.kind.replace("-", " ")}</h2></div>
-        <span className={styles.lineBadge}>Line {step.line}</span>
-      </header>
-      <LoopBadge step={step} />
-      <BranchIndicator step={step} />
-      <CallStack frames={step.scopes.stack ?? []} />
-      {arrays.map(([name, value]) => <ArrayRow key={name} name={name} values={value} />)}
-      <div className={styles.variableGrid}>{variables.map(([name, value]) => <VarBox key={name} name={name} value={value} />)}</div>
-      <section className={styles.console} aria-label="Console output"><header>Console</header><pre>{output.length ? output.join("\n") : "No output yet"}</pre></section>
+    <div className="memoryPanel">
+      <CallStack frames={frames} />
+      {arrays.map(([name, values]) => <ArrayRow key={name} name={name} values={values} previous={index > 0 && isArray(before[name] as SnapshotValue) ? before[name] as SnapshotValue[] : undefined} />)}
+    </div>
+  );
+}
+
+interface FlowStageProps {
+  trace: Trace;
+  index: number;
+  flow?: FlowGraph;
+  path?: FlowPath;
+  playing: boolean;
+}
+
+/** Flowchart with the operation pill and the step caption. */
+export function FlowStage({ trace, index, flow, path, playing }: FlowStageProps) {
+  const { t, lang } = useT();
+  const step = trace[index];
+  if (!step) {
+    return (
+      <section className="empty">
+        <div className="emptyMark">▶</div>
+        <h2>{t.readyTitle}</h2>
+        <p>{t.readyBody}</p>
+      </section>
+    );
+  }
+  const nodeId = path?.nodes[index];
+  const label = flow?.nodes.find((node) => node.id === nodeId)?.label;
+  const story = narrate(trace, index, step.kind === "condition" ? label : undefined, lang);
+  return (
+    <section className={`flowStage${playing ? " playing" : ""}`}>
+      <div className="pillRow">
+        <span key={`${index}-pill`} className={`opPill tone-${story.tone}`}>{story.pill}</span>
+        <span className="lineBadge">{t.line} {step.line}</span>
+      </div>
+      {flow && path ? <FlowChart flow={flow} path={path} index={index} /> : <p className="memoryEmpty">{t.noFlow}</p>}
+      <p className="caption" aria-live="polite"><strong>{t.step} {index + 1}</strong><span key={index}>{story.caption}</span></p>
     </section>
   );
 }
